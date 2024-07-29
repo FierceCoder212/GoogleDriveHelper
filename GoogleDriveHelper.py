@@ -1,3 +1,5 @@
+import os
+
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
@@ -17,18 +19,15 @@ class GoogleDriverHelper:
         file.Upload()
 
     def upload_file_from_content(self, file_bytes: bytes, file_name: str):
-        file_metadata = {
-            'title': file_name,
-            'parents': [{'id': self.folder_id}]
-        }
-        file = self.drive.CreateFile(file_metadata)
-        file.SetContentString(file_bytes)
-        file.Upload()
+        with open(file_name, 'wb') as img_file:
+            img_file.write(file_bytes)
+        self.upload_file_from_path(file_path=file_name, file_name=file_name)
+        os.remove(file_name)
 
     def _setup_folder(self, folder_name: str):
-        query = "title='folder_name' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+        query = f"title='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
         file_list = (self.drive
-                     .ListFile({'q': query.format('folder_name', folder_name)})
+                     .ListFile({'q': query})
                      .GetList())
         if not file_list:
             folder_metadata = {
